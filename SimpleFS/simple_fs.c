@@ -4,24 +4,23 @@
 #include <stdbool.h>
 
 // Inizio Costanti
-#define MAX_RES_NAME 255
+#define MAX_RES_NAME 256  //ovvero 255 più il carattere terminatore della stringa
 #define MAX_TREE_HEIGHT 255
 #define MAX_RES_NUM 1024
 #define HASHTABLE_DIM 128
-#define MAX_DATA_LENGHT 3000
 
 // Fine Costanti
 
 
 typedef struct node {
     
-    char name[MAX_RES_NAME];
-    char data[MAX_RES_NAME];
-    bool is_file;
+    char name[MAX_RES_NAME];    //nome del file o della directory
+    char *data;                 //puntatore ai dati di un file, stringa - NULL per cartelle
+    bool is_file;               //valore booleano per distinguere file da directory
     struct node **resources;    //puntatore a risorse, se è un file è NULL, se è una dir è un vettore di puntatori
-    int free_resources;
-    struct node *next_brother;
-    struct node *last_son;      //ultimo figlio aggiunto
+    int free_resources;         //risorse libere della directory, NULL per i file
+    struct node *next_brother;  //fratello con lo stesso valore hash
+    int height;                 //alteza della directory o risorsa nell'albero
     
     } node;
 
@@ -33,11 +32,15 @@ unsigned hash(char *);
 
 node *Luke_NodeWalker(char *, char *);
 
-void create(char*);
+void create(char *);
 
-void create_dir(char*);
+void create_dir(char *);
 
-void initialize (node*, char[], char[]); //nome e dati della directory
+void res_write(char *, char *);
+
+void res_read(char *);
+
+void res_delete(char *);
 
 // } Fine prototipi funzioni
 
@@ -47,63 +50,136 @@ void initialize (node*, char[], char[]); //nome e dati della directory
 // Variabili globali
 
 node root;
+int slash='/';
+const char space[]=" ";
 
 // fine variabili globali
 
+/*
+  DA SISTEMARE
 
+  - THREE HEIGHT
+  - FIND
+  - WRITE
+  - READ
+  - DELETE
+  - DELETE_R
+  - controllare conflitti hash e strcmp
+  - cancellare last son che non serve a niente
+*/
 
 
 int main(){
     
-    int arg=1;  //iniziallizzato a 1
-    char command[10];
-    char path[MAX_RES_NAME*MAX_TREE_HEIGHT];
-    char *data;
-    char *token;
+    int arg=10;  //valore di iniziallizzazione a 10
+    char command[15];
+    char *string=NULL;
+    char *data=NULL;
+    int count=-1;
+
+
     strcpy(root.name, "/");
     root.free_resources=MAX_RES_NUM;
     root.is_file=false;
     root.resources=NULL;
-    
+    root.height=1;
+
+
     while(arg>0){
-        
-        scanf("%s %s", command, path);
-        data = strtok(path, " ");
-        arg=command_to_number(command);
-        //token=strtok(path, "/");
-        
-        switch(arg){
-            case 0:
-                break;
-            case 1:
-                //create
-                
-                create(path);
-                break;
-            case 2:
-                //create_dir
-                
-               // Luke_NodeWalker(path);
-                break;
-            case 3:
-                //read
-                break;
-            case 4:
-                //write
-                break;
-            case 5:
-                //delete
-                break;
-            case 6:
-                //delete_r
-                break;
-            case 7:
-                //find
-                break;
-            default:
-                printf("no\n");
-                
-        }
+
+    	if(string!=NULL){
+        free(string);
+        string=NULL;
+    	}
+
+      if(data!=NULL){
+        free(data);
+        data=NULL;
+      }
+      
+    	scanf("%s", command); //acquisisce il comando
+    	
+      if (strcmp(command, "exit")==0){
+    		exit(0);
+    	}
+      
+      getchar();  //acquisisce il carattere spazio
+
+      /*
+      Segue l'allocazione dinamica di una stringa che conterrà o il percorso del file/directory
+      o l'argomento della funzione find. L'allocazione si ferma appena incontra uno spazio o un simbolo di newline,
+      lasciando nello stdin il resto dell'input nel caso, ad esempio, di write.
+      */
+      count=-1;
+      do{
+        count++;
+        string=(char*)realloc(string, sizeof(char));
+        scanf("%c", &string[count]);
+      }
+      while(string[count]!=' '&&string[count]!='\n');
+
+      string[count]='\0';
+
+
+      arg=command_to_number(command);
+              
+      switch(arg){
+          case 1:
+              //create
+              create(string);
+              break;
+              
+          case 2:
+              //create_dir
+              create_dir(string);
+              break;
+              
+          case 3:
+              //read
+              res_read(string);
+              break;
+              
+          case 4:
+              //write
+                  
+              
+              //Allocazione dinamica della stringa da memorizzare nel file, count è il contatore del vettore di caratteri che contiene la stringa
+              count=-1;
+
+              scanf("%*c"); //acquisisce virgoletta
+              
+              do{
+                count++;
+                data=(char*)realloc(data, sizeof(char));
+                scanf("%c", &data[count]);
+              }
+              while(data[count]!='"');
+              
+              data[count]='\0';
+
+              res_write(string, data);
+
+              break;
+              
+          case 5:
+              //delete
+
+              res_delete(string);
+
+              break;
+              
+          case 6:
+              //delete_r
+              break;
+              
+          case 7:
+              //find
+              break;
+              
+          default:
+              printf("no\n");
+              
+      }
         
         
         
@@ -111,42 +187,39 @@ int main(){
     
     
     
-    return 0;
 }
-
-
-
 
 node *Luke_NodeWalker(char *path, char *son){
     
     unsigned hashvalue;
     node *pointer=&root;
-    
-    while(path!=son&&path!=NULL){
-            
-        hashvalue=hash(path);
-        
+    char *token=strtok(path, "/");
+
+
+    while(token!=son&&token!=NULL){     //aggiungo anche path!=NULL ?? perchè?? prima c'era
+     // oppure strcmp(token, son)!=0
+        hashvalue = hash(token);
+
         if (pointer->resources!=NULL){
-            
-            pointer=pointer->resources[hashvalue];
-            
-            while(strcmp(pointer->name, path)!=0 && pointer!=NULL){
-                pointer=pointer->next_brother;  //scorro la lista dei figli con lo stesso hashvalue
+            pointer = pointer->resources[hashvalue];
+
+            while(pointer!=NULL&&strcmp(pointer->name, token)!=0){
+                pointer = pointer->next_brother; 
             }
-            
-            path=strtok(NULL, "/");
+
+            token=strtok(NULL, "/");
             
         }
-        
+
+        else{
+          return NULL;  //pointer->resources == NULL, path non presente
+        }
         
     }
-    
-    return pointer;
-    
+
+    return pointer;   //esco dal ciclo while quando arrivo al padre della risorsa su cui operare
+
 }
-
-
-
 
 
 
@@ -154,174 +227,381 @@ node *Luke_NodeWalker(char *path, char *son){
 
 void create(char *path){
     
-    unsigned hashval;
-    int slash='/';
-    char *name;
-    node *father=&root;
-    name = strrchr(path, slash);
-    path= strtok(path, "/");
-    
-    
-    if (path==NULL) {   // caso in cui si cerca di creare la directory root, preesistente
-        printf("no");
-    }
-    
-    else{
-        
-        if (name!=NULL){
-        name++;
-        father = Luke_NodeWalker(path, name);
-        }
-        
-        if (father==NULL){
-            printf("no\n");
-        }
-        
-        else {      //esiste il nodo padre, posso procedere a creare il file
-            
-            if(!father->is_file){
-                
-                hashval=hash(name);
-                
-                if (father->resources==NULL) {      //il padre non ha ancora figli
-                    
-                    father->resources = (node**) (malloc(sizeof(node*)*HASHTABLE_DIM));
-                    
-                    for (int i=0; i<HASHTABLE_DIM; i++) {
-                        father->resources[i]=NULL;
-                    }
-                    
-                    father->resources[hashval] = (node*) malloc(sizeof(node));
-                    
-                    strcpy(father->resources[hashval]->name, name);
-                    
-                    father->resources[hashval]->is_file=true;
-                    father->resources[hashval]->free_resources=0;
-                    father->resources[hashval]->resources=NULL;
-                    father->resources[hashval]->next_brother=NULL;
-                    father->resources[hashval]->last_son=NULL;
-                    father->last_son=father->resources[hashval];
-                    father->free_resources--;
-                    
-                    printf("ok\n");
-                }
-                
-                else{       //il padre ha già altri figli
-                    
-                    bool res_exists=false;     //valore booleano se è già presente il file nella directory padre
-                    
-                    if (father->free_resources!=0){
+  unsigned hashvalue;
+  char *name;
+  node *father=NULL;
+  name = strrchr(path, slash);
+  //path = strtok(path, "/");
+  node *temp;
+  
+  if (path==NULL) {   // caso in cui si cerca di creare la directory root, preesistente
+      printf("no\n");
+  }
+  
+  else{
+      
+      if (name!=NULL){
+          name++;
+          father = Luke_NodeWalker(path, name);
+      }
+      
+      if (father==NULL||name==NULL){
+          printf("no\n");
+      }
+      
+      else {      //esiste il nodo padre, posso procedere a creare il file
+          
+          if(strlen(name)<MAX_RES_NAME) {
+
+            if(!(father->is_file)&&(father->height<MAX_TREE_HEIGHT)){
                         
-                        node *temp=father->resources[hashval];
+                        hashvalue=hash(name);
                         
-                        while(temp!=NULL&&!res_exists){
+                        if (father->resources==NULL) {      //il padre non ha ancora figli, creo la tabella hash di puntatori ai figli
                             
-                            if(strcmp(father->resources[hashval]->name, name)==0){ //file o directory già esistente
-                                printf("no\n");
-                                res_exists=true;
-                            }
-                            else{
-                                temp=temp->next_brother;
-                            }
-                        }
-                        if(!res_exists){
-                            temp =(node*) malloc(sizeof(node));
+                            father->resources = (node**) (calloc(HASHTABLE_DIM, sizeof(node*)));
+                    //tabella hash dei figli creata e iniziallizzata a NULL
+                            
+                            temp = (node*) malloc(sizeof(node));
+                            father->resources[hashvalue]=temp;
                             strcpy(temp->name, name);
-                            temp->next_brother= father->resources[hashval];
+                            
                             temp->is_file=true;
                             temp->free_resources=0;
                             temp->resources=NULL;
-                            temp->last_son=NULL;
-                            father->resources[hashval]=temp;
-                            father->last_son=temp;
+                            temp->next_brother=NULL;
+                            temp->data=NULL;
+                            temp->height=(father->height)+1;
                             father->free_resources--;
+                            
                             printf("ok\n");
                         }
-                    }
-                    
-                }
-                
-            }
-        }
-    }
-    
-    
+                        
+                        else{       //il padre ha già altri figli
+                            
+                            bool res_exists=false;     //valore booleano se è già presente il file nella directory padre
+                            
+                            if (father->free_resources!=0){
+                                
+                                node *temp=father->resources[hashvalue];
+                                
+                                while(temp!=NULL&&!res_exists){  //perchè se temp==NULL allora o non ci sono figli con lo stesso hashvalue o arrivo alla fine della coda
+                                    
+                                    if(strcmp(father->resources[hashvalue]->name, name)==0){ //file o directory già esistente
+                                        printf("no\n");
+                                        res_exists=true;
+                                    }
+                                    else{
+                                        temp=temp->next_brother;
+                                    }
+                                }
+                                if(!res_exists){
+                                    temp =(node*) malloc(sizeof(node));
+                                    strcpy(temp->name, name);
+                                    temp->next_brother= father->resources[hashvalue];
+                                    temp->is_file=true;
+                                    temp->data=NULL;
+                                    temp->free_resources=0;
+                                    temp->resources=NULL;
+                                    temp->height=(father->height)+1;
+                                    father->resources[hashvalue]=temp;
+                                    father->free_resources--;
+                                    printf("ok\n");
+                                }
+                            }
+                        }
+                  
+              }
+              
+          }
+          else{
+            printf("no\n"); //lunghezza del file eccede i limiti del filesystem
+          }
+      }
+  }
 
 }
 
 
 
+void create_dir(char *path){
 
-//void create_dir(char path[]){
-//    node *curr_dir = &root;
-//    int tree_height=0;
-//    int res_num;
-//    char sep[2]="/";
-//    char *token;
-//    int count=0;
-//    char name[MAX_RES_NAME];
-//    
-//    
-//    /* Segue:
-//     Parte di codice in cui curr_dir avanza nel percorso
-//     e 
-//     tree_height++;
-//     */
-//        token = strtok(path, sep);
-//        
-//        while((curr_dir->resources[count]!=NULL)&&(token!=NULL)){
-//            
-//            if (curr_dir->resources[count]==NULL)
-//                break; //non trova la directory
-//            
-//            else if (strcmp(curr_dir->resources[count]->d->name, token)){
-//                tree_height++;
-//                token=strtok(NULL, sep);
-//                curr_dir=curr_dir->resources[count]->d;
-//                count=0;
-//            }
-//            
-//            else
-//                count++;
-//            
-//        }
-//    /*Controllo possibili errori*/
-//    
-//    if (token==NULL || (curr_dir->resources[count]!=NULL&&curr_dir->resources[count]==NULL) || tree_height>=MAX_TREE_HEIGHT) //cartella gia' esistente o non trova la directory o massima altezza nell'albero
-//        printf("no");
-//    
-//    
-//    else{   // ha superato il controllo degli errori
-//        
-//        res_num=MAX_RES_NUM-(curr_dir->free_resources); // POSSO SOSTITUIRLO CON COUNT
-//        strcpy(name, token);
-//        if ((token=strtok(NULL, sep))==NULL)
-//        {
-//            // l'ultima stringa in token e' effettivamente il nome
-//            // della directory da creare
-//            if (curr_dir->resources[count]==NULL) {    // la directory non ha risorse -> creo vettore di risorse
-//                curr_dir->resources[count] = (union resource*) malloc(sizeof(union resource));
-//            }
-//            curr_dir->resources[res_num]->d = (node*) malloc(sizeof(node));
-//            curr_dir->resources[res_num]->d->free_resources=MAX_RES_NUM;
-//            strcpy(curr_dir->resources[res_num]->d->name, name);
-//            curr_dir->free_resources--;
-//            }
-//        
-//        else{
-//            // directory non esistente
-//            printf("no");
-//        }
-//        
-//        
-//    
-//    }
-//    
-//}
-//
+  unsigned hashvalue;
+  char *name;
+  node *father=&root;
+  name = strrchr(path, slash);
+  //path= strtok(path, "/");
+
+  if (path==NULL){		//impossibile creare la root, che esiste già
+  	printf("no\n");
+  }
+
+ 	else{
+
+ 		if(name!=NULL){
+ 			name++;
+ 			father= Luke_NodeWalker(path, name);
+ 		}
+
+ 		if(father==NULL){
+ 			printf("no\n");
+ 		}
+
+ 		else{
+
+   			if(strlen(name)<MAX_RES_NAME){
+
+          if(!(father->is_file)&&(father->height<MAX_TREE_HEIGHT)){
+
+                   hashvalue=hash(name);
+        
+                   if(father->resources==NULL){  //il padre non ha ancora figli, creo la tabella hash di puntatori ai figli
+                     father->resources = (node**) (calloc(HASHTABLE_DIM ,sizeof(node*)));
+                            // tabella hash ai figli creata e iniziallizzata a NULL 
+        
+                            father->resources[hashvalue]= (node *) malloc(sizeof(node));
+        
+                            strcpy(father->resources[hashvalue]->name, name);
+        
+                            father->resources[hashvalue]->is_file=false;
+                            father->resources[hashvalue]->free_resources=MAX_RES_NUM;
+                            father->resources[hashvalue]->resources=NULL;
+                            father->resources[hashvalue]->next_brother=NULL;
+                            father->resources[hashvalue]->height=father->height +1;
+                            father->free_resources--;
+        
+                            printf("ok\n");
+                   }
+        
+                   else{  //il padre ha già altri figli
+                     
+                    bool res_exists=false;  //valore booleano, vero se è già presente il file nella directory padre
+        
+                     if(father->free_resources!=0){
+        
+                       node *temp=father->resources[hashvalue];
+        
+                       while(temp!=NULL&&!res_exists){
+                         //perchè se temp==NULL allora o non ci sono figli con lo stesso hashvalue o arrivo alla fine della coda
+        
+                         if(strcmp(father->resources[hashvalue]->name, name)==0){
+                           //già esistente
+                           printf("no\n");
+                           res_exists=true;
+                         }
+                         else{
+                           temp=temp->next_brother;
+                         }
+                       }
+        
+                      if(!res_exists){
+                          temp= (node*) malloc(sizeof(node));
+                          strcpy(temp->name, name);
+                          temp->next_brother=father->resources[hashvalue];
+                          temp->is_file=false;
+                          temp->free_resources=MAX_RES_NUM;
+                          temp->resources=NULL;
+                          temp->height=father->height +1;
+                          father->resources[hashvalue]=temp;
+                          father->free_resources--;
+                          printf("ok\n");
+          
+                       }       
+        
+        
+                     }       
+        
+                   }        
+        
+        
+                 }
+               }
+               else{
+                printf("no\n"); //lunghezza del nome eccede i limiti del filesystem
+               }
+ 		}
 
 
-                   
+ 	}
+
+
+}
+
+
+void res_write(char *path, char *data){
+
+  char *name=strrchr(path, slash);
+
+  name++;
+  node *father=Luke_NodeWalker(path, name);
+  unsigned hashvalue_son=hash(name);
+  unsigned long data_lenght=strlen(data);
+
+  /*
+  Se il puntatore al padre è diverso da NULL e ha risorse allora procedo a cercare il nodo file, se alla fine della
+  coda temp non punta al nodo su cui devo scrivere, la risorsa non esiste. Altrimenti se esiste ed è un file vado avanti
+  e scrivo.
+  */
+
+  if(father!=NULL){
+
+    if (father->resources!=NULL){
+      
+      node *temp = father->resources[hashvalue_son];
+
+      while(temp!=NULL&&(strcmp(temp->name, name)!=0)){
+        temp=temp->next_brother;
+      }
+
+      if (temp==NULL)
+      {
+        printf("no\n"); //non esiste il file
+      }
+
+      else{
+
+        if(temp->is_file==true){
+          
+          if(temp->data!=NULL){ //sovrascrive il file
+            free(temp->data);
+            temp->data=NULL;
+          }
+
+          temp->data = (char*)calloc(data_lenght+1, sizeof(char));
+          strcpy((temp->data), data);
+          
+          printf("ok %lu\n", data_lenght);
+          
+        }
+        
+        else{
+          printf("no\n"); //tentativo di scrivere dati in una directory
+        }
+      }
+    }
+
+    else{
+      printf("no\n"); //path non esistente, esiste il padre ma non ha figli
+    }
+
+  }
+
+  else{
+    printf("no\n"); //path non esistente
+  }
+
+}
+
+
+void res_read(char *path){
+
+  char *file_name=strrchr(path, slash);
+  file_name++;
+  unsigned hashvalue=hash(file_name);  
+
+  node *father=Luke_NodeWalker(path, file_name);
+  node *temp=NULL;
+
+  if(father!=NULL){ //esiste il padre
+    if(father->resources!=NULL){  //il padre ha figli
+
+      temp=father->resources[hashvalue];
+
+      if(temp!=NULL){ //esistono figli col valore hash uguale al file
+        while(temp!=NULL&&(strcmp(temp->name, file_name)!=0)){
+          temp=temp->next_brother;  //scorre la lista di figli con hash uguale per cercare il file
+        }
+        if(temp==NULL){
+          printf("no1\n"); //non esiste il file
+        }
+        else{ //esiste il file
+          if(temp->is_file==true){  //è un file
+            if(temp->data!=NULL){ //è stata eseguita una write sul file
+              printf("contenuto %s\n", temp->data);
+            }  
+            else{ //contenuto nullo, non è stata eseguita una write
+              printf("contenuto \n");
+            }
+          }
+          else{
+            printf("no2\n"); //è una dir
+          }
+        }
+      }
+      else{
+        printf("no3\n"); //non ci sono figli con quel valore hash
+      }
+    }
+    else{
+      printf("no4\n"); //il padre non ha figli
+    }
+  }
+  else{
+    printf("no5\n"); //non esiste il path
+  }
+
+}
+
+
+void res_delete(char *path){
+
+  //resource delete
+
+  char *name=strrchr(path, slash);
+  name++;
+  unsigned hashvalue=hash(name);
+
+  node *father=Luke_NodeWalker(path, name);
+  node *temp;
+  node *last_brother=NULL;
+
+  if(father!=NULL){
+
+    if(father->resources!=NULL){
+      temp=father->resources[hashvalue];
+      while(temp!=NULL&&strcmp(temp->name, name)!=0){
+        last_brother=temp;
+        temp=temp->next_brother;
+      }
+      if(temp!=NULL&&(temp->resources==NULL)){ //esiste la risorsa e non ha figli
+
+        if(last_brother!=NULL){ //nodo all'interno della lista
+          last_brother->next_brother=temp->next_brother;
+        }
+        else{ //nodo in testa alla lista
+          father->resources[hashvalue]=temp->next_brother;
+        }
+        
+        if(temp->data!=NULL){ //cancello i dati scritti sul file
+          free(temp->data);
+        }
+        free(temp); //cancello la risorsa
+
+        father->free_resources++;
+
+        if(father->free_resources==MAX_RES_NUM){  //rendo la directory padre cancellabile se non ha più figli
+          free(father->resources);
+          father->resources=NULL;
+        }
+
+        printf("ok\n");
+
+      }
+      else{
+        printf("no\n"); //la risorsa non esiste oppure ha figli
+      }
+    }
+    else{
+      printf("no\n"); //file inesistente
+    }
+
+  }
+  else{
+    printf("no\n"); //path non trovato
+  }
+
+}
+
 
 int command_to_number(char *s){
     if(strcmp(s, "exit")==0)
@@ -340,21 +620,17 @@ int command_to_number(char *s){
         return 6;
     if(strcmp(s, "find")==0)
         return 7;
-    else return -1;
+    else return 8;
 }
-
-
 
 
 unsigned hash(char *c){
     
     unsigned hash_val;
     for(hash_val=0; *c!='\0'; c++){
-        hash_val= *c+31*hash_val; //funzione hash dal libro C programming language
+        hash_val= (*c+31*hash_val)%HASHTABLE_DIM; //funzione hash dal libro C programming language
     }
+
     return hash_val % HASHTABLE_DIM;
     
 }
-
-
-
