@@ -512,7 +512,7 @@ void res_read(char *path){
           temp=temp->next_brother;  //scorre la lista di figli con hash uguale per cercare il file
         }
         if(temp==NULL){
-          printf("no1\n"); //non esiste il file
+          printf("no\n"); //non esiste il file
         }
         else{ //esiste il file
           if(temp->is_file==true){  //è un file
@@ -524,20 +524,20 @@ void res_read(char *path){
             }
           }
           else{
-            printf("no2\n"); //è una dir
+            printf("no\n"); //è una dir
           }
         }
       }
       else{
-        printf("no3\n"); //non ci sono figli con quel valore hash
+        printf("no\n"); //non ci sono figli con quel valore hash
       }
     }
     else{
-      printf("no4\n"); //il padre non ha figli
+      printf("no\n"); //il padre non ha figli
     }
   }
   else{
-    printf("no5\n"); //non esiste il path
+    printf("no\n"); //non esiste il path
   }
 
 }
