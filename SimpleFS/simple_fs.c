@@ -8,7 +8,6 @@
 #define MAX_TREE_HEIGHT 255
 #define MAX_RES_NUM 1024
 #define HASHTABLE_DIM 128
-
 // Fine Costanti
 
 
@@ -23,6 +22,7 @@ typedef struct node {
     int height;                 //alteza della directory o risorsa nell'albero
     
     } node;
+
 
 //Inizio prototipi funzioni {
 
@@ -44,7 +44,9 @@ void res_read(char *);
 
 void res_delete(char *);
 
-void res_delete_r(char *);
+void delete_r(char *);
+
+void res_delete_r(node *);
 
 void find(node *, char*, char *, char**, int);      //parte da root, passo stringa path, nome file/dir, vettore di stringhe, intero contatore
 
@@ -57,7 +59,6 @@ void find(node *, char*, char *, char**, int);      //parte da root, passo strin
 
 node root;
 int slash='/';
-const char space[]=" ";
 
 // fine variabili globali
 
@@ -178,7 +179,7 @@ int main(){
           case 6:
               //delete_r
               
-              
+              delete_r(string);
               
               break;
               
@@ -562,41 +563,79 @@ void res_delete(char *path){
 }
 
 
-
-
 void delete_r(char *path){
     
     char *name=strrchr(path, slash);
     name++;
     unsigned hashvalue=hash(name);
+    
     node *father=Luke_NodeWalker(path, name);
     node *resource;
+    node *last_brother=NULL;
     
     if(father!=NULL){
         
         if(father->resources!=NULL){
-
             resource=father->resources[hashvalue];
-            while(resource!=NULL&&(strcmp(resource->name, name)!=0)){
+            
+            while(resource!=NULL&&strcmp(resource->name, name)!=0){
+                //scorro la lista dei figli con uguale hashvalue per cercare la risorsa da cancellare
+                last_brother=resource;
                 resource=resource->next_brother;
             }
             
-            if (resource==NULL) {
-                printf("no\n");
+            if(resource!=NULL){
+                //esiste la risorsa da cancellare
+                
+                if(last_brother==NULL){
+                    //la risorsa da cancellare è in testa alla lista
+                    father->resources[hashvalue]=resource->next_brother;
+                    res_delete_r(resource);
+                    father->free_resources++;
+                }
+                
+                else{
+                 //la risorsa da cancellare non è in testa alla lista
+                    last_brother->next_brother=resource->next_brother;
+                    father->free_resources++;
+                    res_delete_r(resource);
+                }
+                
+                if(father->free_resources==MAX_RES_NUM){  //rendo la directory padre cancellabile se non ha più figli
+                    free(father->resources);
+                    father->resources=NULL;
+                }
+                
+                printf("ok\n");
             }
-            
-            
+            else{
+                printf("no\n");
+                //non esiste la risorsa da cancellare
+            }
         }
-
-        
+        else{
+            printf("no\n");
+            //path inesistente: esiste il padre ma non ha risorse
+        }
     }
     else{
         printf("no\n");
+        //path inesistente
     }
     
+}
+
+void res_delete_r(node *resource){
     
+    if(resource!=NULL){
+     
+        
+        
+    }
     
 }
+
+
 
 node *getResourcePointer(char *path){
     
