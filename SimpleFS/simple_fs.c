@@ -32,6 +32,8 @@ unsigned hash(char *);
 
 node *Luke_NodeWalker(char *, char *);
 
+node *getResourcePointer(char *);
+
 void create(char *);
 
 void create_dir(char *);
@@ -41,6 +43,10 @@ void res_write(char *, char *);
 void res_read(char *);
 
 void res_delete(char *);
+
+void res_delete_r(char *);
+
+void find(node *, char*, char *, char**, int);      //parte da root, passo stringa path, nome file/dir, vettore di stringhe, intero contatore
 
 // } Fine prototipi funzioni
 
@@ -58,14 +64,14 @@ const char space[]=" ";
 /*
   DA SISTEMARE
 
-  - THREE HEIGHT
+  - THREE HEIGHT <––
   - FIND
-  - WRITE
-  - READ
-  - DELETE
+  - WRITE <––
+  - READ <––
+  - DELETE <––
   - DELETE_R
-  - controllare conflitti hash e strcmp
-  - cancellare last son che non serve a niente
+  - controllare conflitti hash e strcmp <––
+  - cancellare last son che non serve a niente <––
 */
 
 
@@ -144,6 +150,7 @@ int main(){
                   
               
               //Allocazione dinamica della stringa da memorizzare nel file, count è il contatore del vettore di caratteri che contiene la stringa
+              
               count=-1;
 
               scanf("%*c"); //acquisisce virgoletta
@@ -165,11 +172,14 @@ int main(){
               //delete
 
               res_delete(string);
-
+              
               break;
               
           case 6:
               //delete_r
+              
+              
+              
               break;
               
           case 7:
@@ -196,7 +206,7 @@ node *Luke_NodeWalker(char *path, char *son){
     char *token=strtok(path, "/");
 
 
-    while(token!=son&&token!=NULL){     //aggiungo anche path!=NULL ?? perchè?? prima c'era
+    while(token!=son&&token!=NULL&&pointer!=NULL){     //aggiungo anche path!=NULL ?? perchè?? prima c'era -- AGGIUNTO POINTER!=NULL
      // oppure strcmp(token, son)!=0
         hashvalue = hash(token);
 
@@ -312,7 +322,9 @@ void create(char *path){
                         }
                   
               }
-              
+            else{
+                printf("no\n"); //si cerca di scrivere in un file o eccede i limiti del filesystem
+            }
           }
           else{
             printf("no\n"); //lunghezza del file eccede i limiti del filesystem
@@ -493,54 +505,36 @@ void res_write(char *path, char *data){
 }
 
 
+
+
 void res_read(char *path){
 
-  char *file_name=strrchr(path, slash);
-  file_name++;
-  unsigned hashvalue=hash(file_name);  
-
-  node *father=Luke_NodeWalker(path, file_name);
-  node *temp=NULL;
-
-  if(father!=NULL){ //esiste il padre
-    if(father->resources!=NULL){  //il padre ha figli
-
-      temp=father->resources[hashvalue];
-
-      if(temp!=NULL){ //esistono figli col valore hash uguale al file
-        while(temp!=NULL&&(strcmp(temp->name, file_name)!=0)){
-          temp=temp->next_brother;  //scorre la lista di figli con hash uguale per cercare il file
-        }
-        if(temp==NULL){
-          printf("no\n"); //non esiste il file
-        }
-        else{ //esiste il file
-          if(temp->is_file==true){  //è un file
-            if(temp->data!=NULL){ //è stata eseguita una write sul file
-              printf("contenuto %s\n", temp->data);
-            }  
-            else{ //contenuto nullo, non è stata eseguita una write
-              printf("contenuto \n");
+    node *resource=getResourcePointer(path);
+    
+    if(resource!=NULL){
+        // la risorsa esiste
+        if(resource->is_file){
+            // ed è un file
+            if(resource->data!=NULL){
+                printf("contenuto %s\n", resource->data);
             }
-          }
-          else{
-            printf("no\n"); //è una dir
-          }
+            else{
+                printf("contenuto \n"); //non è stata eseguita una write
+            }
         }
-      }
-      else{
-        printf("no\n"); //non ci sono figli con quel valore hash
-      }
+        else{
+            // non è un file
+            printf("no\n");
+        }
     }
     else{
-      printf("no\n"); //il padre non ha figli
+        //file non trovato
+        printf("no\n");
     }
-  }
-  else{
-    printf("no\n"); //non esiste il path
-  }
-
+    
 }
+
+
 
 
 void res_delete(char *path){
@@ -600,6 +594,67 @@ void res_delete(char *path){
     printf("no\n"); //path non trovato
   }
 
+}
+
+
+
+
+void delete_r(char *path){
+    
+    char *name=strrchr(path, slash);
+    name++;
+    unsigned hashvalue=hash(name);
+    node *father=Luke_NodeWalker(path, name);
+    node *resource;
+    
+    if(father!=NULL){
+        
+        if(father->resources!=NULL){
+
+            resource=father->resources[hashvalue];
+            while(resource!=NULL&&(strcmp(resource->name, name)!=0)){
+                resource=resource->next_brother;
+            }
+            
+            if (resource==NULL) {
+                printf("no\n");
+            }
+            
+            
+        }
+
+        
+    }
+    else{
+        printf("no\n");
+    }
+    
+    
+    
+}
+
+node *getResourcePointer(char *path){
+    
+    char *name=strrchr(path, slash);
+    name++;
+    unsigned hashvalue=hash(name);
+    node *father=Luke_NodeWalker(path, name);
+    
+    node *pointer=NULL;
+    
+    if(father!=NULL){
+        if (father->resources!=NULL) {
+            pointer=father->resources[hashvalue];
+            while(pointer!=NULL&&(strcmp(pointer->name, name))!=0){
+                pointer=pointer->next_brother;
+            }
+        }
+    }
+    else{   //path non trovato
+        return NULL;
+    }
+    
+    return pointer;
 }
 
 
