@@ -442,66 +442,31 @@ void create_dir(char *path){
 
 void res_write(char *path, char *data){
 
-  char *name=strrchr(path, slash);
-
-  name++;
-  node *father=Luke_NodeWalker(path, name);
-  unsigned hashvalue_son=hash(name);
-  unsigned long data_lenght=strlen(data);
-
-  /*
-  Se il puntatore al padre è diverso da NULL e ha risorse allora procedo a cercare il nodo file, se alla fine della
-  coda temp non punta al nodo su cui devo scrivere, la risorsa non esiste. Altrimenti se esiste ed è un file vado avanti
-  e scrivo.
-  */
-
-  if(father!=NULL){
-
-    if (father->resources!=NULL){
-      
-      node *temp = father->resources[hashvalue_son];
-
-      while(temp!=NULL&&(strcmp(temp->name, name)!=0)){
-        temp=temp->next_brother;
-      }
-
-      if (temp==NULL)
-      {
-        printf("no\n"); //non esiste il file
-      }
-
-      else{
-
-        if(temp->is_file==true){
-          
-          if(temp->data!=NULL){ //sovrascrive il file
-            free(temp->data);
-            temp->data=NULL;
-          }
-
-          temp->data = (char*)calloc(data_lenght+1, sizeof(char));
-          strcpy((temp->data), data);
-          
-          printf("ok %lu\n", data_lenght);
-          
+    node *resource=getResourcePointer(path);
+    
+    if(resource!=NULL){
+        
+        if(resource->is_file){
+            if(resource->data!=NULL){
+                //sovrascrivo il file
+                free(resource->data);
+                resource->data=NULL;
+            }
+            resource->data = (char*)calloc(strlen(data)+1, sizeof(char));
+            strcpy((resource->data), data);
+            printf("ok %lu\n", strlen(data));
+        }
+        else{
+            // non è un file, non scrivo
+            printf("no\n");
         }
         
-        else{
-          printf("no\n"); //tentativo di scrivere dati in una directory
-        }
-      }
     }
-
     else{
-      printf("no\n"); //path non esistente, esiste il padre ma non ha figli
+        //path non esistente
+        printf("no\n");
     }
-
-  }
-
-  else{
-    printf("no\n"); //path non esistente
-  }
-
+    
 }
 
 
@@ -634,6 +599,17 @@ void delete_r(char *path){
 }
 
 node *getResourcePointer(char *path){
+    
+    
+    /*
+     Dato path e nome file o directory cerco la risorsa file o directory.
+     
+     Se il puntatore al padre è diverso da NULL e ha risorse allora procedo a cercare il nodo, se alla fine della
+     coda di risorse con lo stesso hashvalue pointer è NULL restituisco NULL, altrimenti se il confronto con il nome
+     dà esito positivo restituisco il puntatore alla risorsa
+     
+     */
+    
     
     char *name=strrchr(path, slash);
     name++;
