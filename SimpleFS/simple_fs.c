@@ -627,8 +627,35 @@ void delete_r(char *path){
 
 void res_delete_r(node *resource){
     
+    node *next=NULL;
+    
     if(resource!=NULL){
      
+        if(resource->resources!=NULL){  // è una directory con figli
+            
+            for (int res_count=0; res_count<HASHTABLE_DIM; res_count++) {
+                
+                if(resource->resources[res_count]!=NULL){
+                    
+                    do{
+                        next=resource->resources[res_count]->next_brother;
+                        res_delete_r(resource->resources[res_count]);
+                        resource->resources[res_count]=next;
+                    }while (next!=NULL);
+                    
+                }
+            }
+            
+            free(resource->resources);
+            
+        }
+        
+        if(resource->data!=NULL){
+            free(resource->data);
+        }
+        
+        free(resource);
+        
         
         
     }
