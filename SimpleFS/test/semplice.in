@@ -1,0 +1,22 @@
+create_dir /foo
+create /foo/bar
+create_dir /foo/baz
+create /foo/baz/qux
+write /foo/bar "test"
+read /foo/bar
+read /foo/baz/qux
+read /foo/baz/quux
+create /foo/bar
+create_dir /dir
+create_dir /bar
+create /dir/bar
+find bar
+delete /foo/bar
+find wat
+find foo
+read /foo/bar
+create /foo/bar
+read /foo/bar
+delete_r /foo
+exit
+

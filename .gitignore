@@ -25,3 +25,5 @@ xcuserdata/
 *.moved-aside
 *.xccheckout
 *.xcscmblueprint
+
+SimpleFS/old_simple_fs.c.old
