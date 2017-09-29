@@ -7,19 +7,34 @@ Here are the commands:
 
 Reminder: paths have Unix-like syntax, like /dir/dir1/dir2/file.
 
-– create <file-path>
+• create <file-path>
+
   creates a file in specified directory
-– create_dir <dir-path>
+  
+• create_dir <dir-path>
+
   creates a directory in specified directory
-– write <file-path> "insert text here"
+
+• write <file-path> "insert text here"
+
   writes a string in a existing file; the string is between two quotation marks
-– read <file-path>
+
+• read <file-path>
+
   reads a file whose string is precedeed by 'contenuto '
-– find <name>
+
+• find <name>
+  
   find files and directories in the filesystem
-– delete <file-path or dir-path>
+
+• delete <file-path or dir-path>
+  
   deletes a file or a directory without sons
-– delete_r <dir-path>
+
+• delete_r <dir-path>
+  
   recoursive delete of a directory
-– exit
+
+• exit
+  
   exit from the program
