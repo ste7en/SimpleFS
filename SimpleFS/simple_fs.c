@@ -6,6 +6,7 @@
 /*
  Progetto di Algoritmi e Principi dell'informatica
  di Stefano Formicola
+ v1.0
  */
 
 // Inizio Costanti
