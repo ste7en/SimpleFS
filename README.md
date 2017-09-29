@@ -1,11 +1,10 @@
 # SimpleFS
 A simple FileSystem based on UNIX FS syntax written in C as final project of Algorithms course of Politecnico di Milano.
 
-The project is a mono module and its source code is in SimpleFS directory with its instructions.
+The project is a mono module and its source code is in SimpleFS directory with its instructions. You can use .in files in /SimpleFS/test directory with cat command from your terminal to test the program with public inputs and compare the results with .out files.
 
 Here are the commands:
-
-Reminder: paths have Unix-like syntax, like /dir/dir1/dir2/file.
+(Reminder: paths have Unix-like syntax, like /dir/dir1/dir2/file.)
 
 • create <file-path>
 
