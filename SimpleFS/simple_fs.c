@@ -188,18 +188,18 @@ void find(node *father, char *name, char *path, unsigned hashvalue) {
     node *pointer = NULL;
     char *temp = NULL;
     
-    if(strcmp(path, "/")! = 0) {
+    if(strcmp(path, "/") != 0) {
         strcat(path, "/");
         //da aggiungere per ogni avanzamento in profondità nell'albero del fs, tranne nel caso di livello 1 (root)
     }
     
-    if(father->is_file == false&&father->resources! = NULL) {
+    if(father->is_file == false&&father->resources != NULL) {
         
         for (int i = 0; i<HASHTABLE_DIM; i++) {
             
             pointer = father->resources[i];
             
-            while(pointer! = NULL) {
+            while(pointer != NULL) {
                 if (pointer->is_file == false) {
                     find(pointer, name, concatenate(path, pointer->name), hashvalue);
                 }
@@ -211,27 +211,27 @@ void find(node *father, char *name, char *path, unsigned hashvalue) {
         pointer = father->resources[hashvalue];
     }
     
-    while(pointer! = NULL&&strcmp(pointer->name, name)! = 0) {
+    while(pointer != NULL&&strcmp(pointer->name, name) != 0) {
         
         pointer = pointer->next_brother;
     }
     
-    if(pointer! = NULL) {
+    if(pointer != NULL) {
         // risorsa trovata
         temp = concatenate(path, name);
         count = addToFoundPaths(temp);
     }
     
-    if(path! = NULL) {
+    if(path != NULL) {
         free(path);
     }
-    if(temp! = NULL) {
+    if(temp != NULL) {
         free(temp);
     }
     
     if(father == &root) {
         
-        if(found_paths! = NULL) {
+        if(found_paths != NULL) {
             
             qsort(found_paths, count, sizeof(char*), compare);
             
@@ -270,9 +270,9 @@ char *concatenate(char *a, char *b) {
     
     char *c = NULL;
     
-    if(a! = NULL&&b! = NULL) {
+    if(a != NULL&&b != NULL) {
         while(c == NULL) {
-            c = calloc(strlen(a)+strlen(b)+2, sizeof(char));
+            c = (char*) calloc(strlen(a)+strlen(b)+2, sizeof(char));
         }
         strcpy(c, a);
         strcat(c, b);
@@ -290,17 +290,17 @@ int addToFoundPaths(char *string) {
         found_paths = calloc(BLOCK_SIZE, sizeof(char*));
     }
     
-    if((count%BLOCK_SIZE) == 0&&count! = 0) {
+    if((count%BLOCK_SIZE) == 0&&count != 0) {
         
         char **temp = NULL;
         while(temp == NULL) {
-            temp = realloc(found_paths, BLOCK_SIZE*sizeof(char*));
+            temp = (char*) realloc(found_paths, BLOCK_SIZE*sizeof(char*));
         }
         found_paths = temp;
     }
     
     while(found_paths[count] == NULL) {
-        found_paths[count] = calloc(MAX_PATH_LENGHT, sizeof(char));
+        found_paths[count] = (char*) calloc(MAX_PATH_LENGHT, sizeof(char));
     }
     
     strcpy(found_paths[count], string);
@@ -363,7 +363,7 @@ void create(char *path) {
                         
                         if(pointers.son == NULL) { // la cartella non esiste, procedo a crearla
                             
-                            if(pointers.father->free_resources! = 0) {
+                            if(pointers.father->free_resources != 0) {
                                 temp = (node*) malloc(sizeof(node));
                                 strcpy(temp->name, filename);
                                 temp->next_brother = pointers.father->resources[hashvalue];
@@ -448,7 +448,7 @@ void create_dir(char *path) {
                     else{  //il padre ha già altri figli
                         
                         if(pointers.son == NULL) {  // la cartella non esiste, procedo a crearla
-                            if(pointers.father->free_resources! = 0) {
+                            if(pointers.father->free_resources != 0) {
                                 temp = (node*) malloc(sizeof(node));
                                 strcpy(temp->name,name);
                                 temp->is_file = false;
@@ -505,7 +505,7 @@ void res_write(char *path) {
     
     do{
         count++;
-        if ((count%BLOCK_SIZE) == 0&&(count! = 0)) {
+        if ((count%BLOCK_SIZE) == 0&&(count != 0)) {
             while(temp == NULL) {
                 temp = realloc(data, sizeof(char)*BLOCK_SIZE);
             }
@@ -513,14 +513,14 @@ void res_write(char *path) {
         }
         scanf("%c", &data[count]);
     }
-    while(data[count]! = '"');
+    while(data[count] != '"');
     
     data[count] = '\0'; //elimina la seconda virgoletta
     
-    if(pointers.son! = NULL) { //il file da scrivere esiste
+    if(pointers.son != NULL) { //il file da scrivere esiste
         
         if(pointers.son->is_file == true) {
-            if(pointers.son->data! = NULL) {
+            if(pointers.son->data != NULL) {
                 //sovrascrivo il file
                 free(pointers.son->data);
                 pointers.son->data = NULL;
@@ -549,11 +549,11 @@ void res_read(char *path) {
     
     pointers pointers = getResourcePointers(path);
     
-    if(pointers.son! = NULL) {
+    if(pointers.son != NULL) {
         // la risorsa esiste
         if(pointers.son->is_file == true) {
             // ed è un file
-            if(pointers.son->data! = NULL) {
+            if(pointers.son->data != NULL) {
                 printf("contenuto %s\n", pointers.son->data);
             }
             else{
@@ -585,32 +585,32 @@ void res_delete(char *path) {
   node *father = NULL;
   node *temp;
 
-    if(name! = NULL) {
+    if(name != NULL) {
         name++;
         hashvalue = hash(name);
         father = Luke_NodeWalker(path, name);
         
     }
     
-  if(father! = NULL) {
+  if(father != NULL) {
 
-    if(father->resources! = NULL) {
+    if(father->resources != NULL) {
       node *last_brother = NULL;
       temp = father->resources[hashvalue];
-      while(temp! = NULL&&strcmp(temp->name, name)! = 0) {
+      while(temp != NULL&&strcmp(temp->name, name) != 0) {
         last_brother = temp;
         temp = temp->next_brother;
       }
-      if(temp! = NULL&&(temp->resources == NULL)) { //esiste la risorsa e non ha figli
+      if(temp != NULL&&(temp->resources == NULL)) { //esiste la risorsa e non ha figli
 
-        if(last_brother! = NULL) { //nodo all'interno della lista
+        if(last_brother != NULL) { //nodo all'interno della lista
           last_brother->next_brother = temp->next_brother;
         }
         else{ //nodo in testa alla lista
           father->resources[hashvalue] = temp->next_brother;
         }
         
-        if(temp->data! = NULL) { //cancello i dati scritti sul file
+        if(temp->data != NULL) { //cancello i dati scritti sul file
           free(temp->data);
         }
         free(temp); //cancello la risorsa
@@ -650,26 +650,26 @@ void delete_r(char *path) {
     node *resource;
     
     
-    if(name! = NULL) {
+    if(name != NULL) {
         name++;
         hashvalue = hash(name);
         father = Luke_NodeWalker(path, name);
         
     }
     
-    if(father! = NULL) {
+    if(father != NULL) {
         
-        if(father->resources! = NULL) {
+        if(father->resources != NULL) {
             resource = father->resources[hashvalue];
             node *last_brother = NULL;
 
-            while(resource! = NULL&&strcmp(resource->name, name)! = 0) {
+            while(resource != NULL&&strcmp(resource->name, name) != 0) {
                 //scorro la lista dei figli con uguale hashvalue per cercare la risorsa da cancellare
                 last_brother = resource;
                 resource = resource->next_brother;
             }
             
-            if(resource! = NULL) {
+            if(resource != NULL) {
                 //esiste la risorsa da cancellare
                 
                 if(last_brother == NULL) {
@@ -719,19 +719,19 @@ void res_delete_r(node *resource) {
      */
     node *next = NULL;
     
-    if(resource! = NULL) {
+    if(resource != NULL) {
      
-        if(resource->resources! = NULL) {  // è una directory con figli
+        if(resource->resources != NULL) {  // è una directory con figli
             
             for (int res_count = 0; res_count<HASHTABLE_DIM; res_count++) {
                 
-                if(resource->resources[res_count]! = NULL) {
+                if(resource->resources[res_count] != NULL) {
                     
                     do{
                         next = resource->resources[res_count]->next_brother;
                         res_delete_r(resource->resources[res_count]);
                         resource->resources[res_count] = next;
-                    }while (next! = NULL);
+                    }while (next != NULL);
                     
                 }
             }
@@ -740,7 +740,7 @@ void res_delete_r(node *resource) {
             
         }
         
-        if(resource->data! = NULL) {
+        if(resource->data != NULL) {
             free(resource->data);
         }
         
@@ -766,14 +766,14 @@ node *Luke_NodeWalker(char *path, char *son) {
     node *pointer = &root;
     char *token = strtok(path, "/");
     
-    while(token! = NULL&&token! = son&&pointer! = NULL) {
+    while(token != NULL&&token != son&&pointer != NULL) {
 
         hashvalue = hash(token);
         
-        if (pointer->resources! = NULL) {
+        if (pointer->resources != NULL) {
             pointer = pointer->resources[hashvalue];
             
-            while(pointer! = NULL&&strcmp(pointer->name, token)! = 0) {
+            while(pointer != NULL&&strcmp(pointer->name, token) != 0) {
                 pointer = pointer->next_brother;    //se pointer == NULL la risorsa non è stata trovata, termina il ciclo
             }
             
@@ -809,16 +809,16 @@ pointers getResourcePointers(char *path) {
     unsigned hashvalue = 0;
     char *name = strrchr(path, slash); //punta all'ultimo simbolo di slash
     
-    if(name! = NULL) {
+    if(name != NULL) {
         name++; //punta al nome della risorsa
         hashvalue = hash(name);
         toReturn.father = Luke_NodeWalker(path, name);
     }
     
-    if(toReturn.father! = NULL) {
-        if (toReturn.father->resources! = NULL) {
+    if(toReturn.father != NULL) {
+        if (toReturn.father->resources != NULL) {
             toReturn.son = toReturn.father->resources[hashvalue];
-            while(toReturn.son! = NULL&&(strcmp(toReturn.son->name, name))! = 0) {
+            while(toReturn.son != NULL&&(strcmp(toReturn.son->name, name)) != 0) {
                 toReturn.son = toReturn.son->next_brother;
             }
         }
@@ -858,8 +858,8 @@ unsigned hash(char *c) {
     
     unsigned hash_val = 0;
     
-    if(c! = NULL) {
-        for(hash_val = 0; *c! = '\0'; c++) {
+    if(c != NULL) {
+        for(hash_val = 0; *c != '\0'; c++) {
             hash_val = (*c+31*hash_val)%HASHTABLE_DIM;
         }
     }
